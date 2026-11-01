@@ -1,0 +1,13 @@
+# Pipeline smoke test on synthetic data. Outputs are watermarked and are NOT results.
+run_name: smoke_tiny
+experiment_kind: smoke
+arch: tiny_cnn
+pretrained: false
+image_size: 32
+variant: clean
+augment: basic
+batch_size: 16
+epochs: 4
+freeze_epochs: 1
+num_workers: 0
+bootstrap_samples: 200

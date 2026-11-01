@@ -1,0 +1,6 @@
+# Milestone 2 (training). Versions below are those the test suite actually ran against (Python 3.13, CPU).
+torch>=2.15
+torchvision>=0.29
+matplotlib>=3.9
+# Planned for later milestones (NOT yet used or tested):
+# timm  albumentations  opencv-python-headless  scipy  captum  plotly  streamlit  sqlalchemy  mlflow

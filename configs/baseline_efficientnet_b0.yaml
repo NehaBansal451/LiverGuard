@@ -1,0 +1,18 @@
+# Baseline: EfficientNet-B0, ImageNet-pretrained, Clean images, official patient-level split.
+run_name: baseline_efficientnet_b0
+experiment_kind: baseline
+arch: efficientnet_b0
+pretrained: true
+image_size: 224
+variant: clean
+augment: basic          # h-flip + small rotation only; photometric augmentation is reserved for M6 interventions
+batch_size: 32
+epochs: 30
+freeze_epochs: 2
+lr: 0.0003
+backbone_lr_mult: 0.1
+weight_decay: 0.0001
+monitor: val_auroc
+patience: 8
+seed: 42
+threshold: 0.5

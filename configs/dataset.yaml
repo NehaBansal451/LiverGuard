@@ -1,0 +1,57 @@
+# LiverGuard dataset configuration: single source of truth for the data tooling.
+# LiverGuard is a research / model-auditing platform, NOT a clinical diagnostic system.
+name: SMC-LUD
+data_root: data/raw/SMC-LUD     # override with LIVERGUARD_DATA_ROOT or --data-root
+metadata_csv: null              # null = auto-detect a single CSV that has an image-filename column
+seed: 42
+# 'global': patient IDs are unique across the whole dataset.
+# 'per_class': IDs repeat across class folders (use only if the real data shows this).
+patient_scope: global
+image_extensions: [".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff"]
+
+classes: [Hemangioma, HCC]      # list index = integer label (Hemangioma=0, HCC=1)
+positive_class: HCC             # malignant class used for sensitivity / AUROC
+split_fractions: {train: 0.7, val: 0.2, test: 0.1}   # documented patient-level 70/20/10
+
+# Aliases are matched as whole path tokens / CSV values (case-insensitive, spaces and '-' -> '_').
+class_aliases:
+  HCC: [hcc, hepatocellular_carcinoma]
+  Hemangioma: [hemangioma, haemangioma]
+split_aliases:
+  train: [train_set, training]
+  val: [val_set, valid, validation]
+  test: [test_set]
+variant_aliases:
+  clean: []
+  caliper: [calipers, with_caliper]
+column_aliases:
+  image_filename: [filename, file, file_name, image, image_name, image_path, path]
+  patient_id: [patient, patient_no, pid, subject_id, case_id]
+  class_label: [label, class, diagnosis, category]
+  split: [subset, partition, set]
+  variant: [version, image_version, type]
+
+# Published figures the real download is compared against. Mismatches are reported as
+# warnings (never silently "fixed"); see known_discrepancies for problems in the docs themselves.
+documented_reference:
+  source: "Tak et al., Sci Data 13:649 (2026), Tables 1-2; Figshare 31112716 v3"
+  total_images: 5385
+  total_patients: 1021
+  images_by_class: {HCC: 2716, Hemangioma: 2669}
+  patients_by_class: {HCC: 600, Hemangioma: 421}
+  images_by_variant_class:
+    clean: {HCC: 1389, Hemangioma: 1267}
+    caliper: {HCC: 1327, Hemangioma: 1402}
+  clean_split_images:
+    train: {HCC: 972, Hemangioma: 886}
+    val: {HCC: 277, Hemangioma: 253}
+    test: {HCC: 140, Hemangioma: 128}
+  known_discrepancies:
+    - "Figshare abstract text says 5,466 images; Figshare Table 1 and the paper say 5,385 (81 images unexplained)."
+    - "Figshare Table 1 lists 422 hemangioma patients; Table 2 and the 1,021 total imply 421."
+    - "HCC mean height: Figshare Table 2 = 163.57 cm, paper Table 2 = 165.74 cm (same SD)."
+    - "License: Figshare label says CC-BY but data are restricted to non-commercial research use (DRB No. 2025-0111); the paper itself is CC BY-NC-ND. LiverGuard follows the stricter terms."
+    - "Paper Methods says one representative image per HCC case, yet 2,716 HCC images come from 600 patients (~4.5 per patient)."
+    - "Paper Data availability cites Figshare 31112716; reference 18 cites 29755535. Figshare 31112716 v3 is the record used here."
+    - "Split counts are documented for the Clean subset only (1,858/530/268). Table 1 totals (3,769/1,076/540) imply a Caliper split of 1,911/546/272, but no per-image Caliper split is documented."
+    - "Table 1 patient counts imply ~654 patients have both Clean and Caliper images, so pooling variants can leak patients across splits."
