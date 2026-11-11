@@ -1,7 +1,7 @@
 # LiverGuard dataset configuration: single source of truth for the data tooling.
 # LiverGuard is a research / model-auditing platform, NOT a clinical diagnostic system.
 name: SMC-LUD
-data_root: data/raw/SMC-LUD     # override with LIVERGUARD_DATA_ROOT or --data-root
+data_root: "data"  # override with LIVERGUARD_DATA_ROOT or --data-root
 metadata_csv: null              # null = auto-detect a single CSV that has an image-filename column
 seed: 42
 # 'global': patient IDs are unique across the whole dataset.
@@ -22,8 +22,8 @@ split_aliases:
   val: [val_set, valid, validation]
   test: [test_set]
 variant_aliases:
-  clean: []
-  caliper: [calipers, with_caliper]
+  clean: [hcc_clean_(wo_caliper), hem_clean_(wo_caliper)]
+  caliper: [hcc_caliper, hem_caliper]
 column_aliases:
   image_filename: [filename, file, file_name, image, image_name, image_path, path]
   patient_id: [patient, patient_no, pid, subject_id, case_id]

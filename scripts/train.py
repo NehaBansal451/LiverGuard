@@ -13,7 +13,6 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from liverguard.data.report import json_default  # noqa: E402
 from liverguard.ml.config import load_train_config  # noqa: E402
 from liverguard.ml.data import LeakageError  # noqa: E402
 from liverguard.ml.trainer import run_experiment  # noqa: E402
@@ -41,15 +40,19 @@ def main(argv: list[str] | None = None) -> int:
     except (FileNotFoundError, ValueError, LeakageError, RuntimeError) as exc:
         print(f"ERROR: {type(exc).__name__}: {exc}", file=sys.stderr)
         return 2
-    t = m["results"]["test"]
     if m["watermark"]:
         print(f"*** {m['watermark']} ***")
+    split = "test" if "test" in m["results"] else "val"
+    t = m["results"][split]
     ci = t["ci95_patient_bootstrap"]["auroc"]
-    print(f"{m['model']['arch']} test: AUROC {t['auroc']:.3f} (95% CI {ci[0]:.3f}-{ci[1]:.3f})  "
+    print(f"{m['model']['arch']} {split}: AUROC {t['auroc']:.3f} (95% CI {ci[0]:.3f}-{ci[1]:.3f})  "
           f"sens {t['sensitivity']:.3f}  spec {t['specificity']:.3f}  F1 {t['f1']:.3f}  n={t['n']}")
-    v = m["results"]["test_at_val_youden"]
-    print(f"  at validation-fitted threshold {m['results']['val_youden_threshold']:.3f}: "
-          f"sens {v['sensitivity']:.3f}  spec {v['specificity']:.3f}  F1 {v['f1']:.3f}")
+    if split == "test":
+        v = m["results"]["test_at_val_youden"]
+        print(f"  at validation-fitted threshold {m['results']['val_youden_threshold']:.3f}: "
+              f"sens {v['sensitivity']:.3f}  spec {v['specificity']:.3f}  F1 {v['f1']:.3f}")
+    else:
+        print("  test split NOT evaluated (evaluate_test=false); it is reserved for the final re-audit.")
     print(f"Run dir: {args.out_dir}")
     return 0
 

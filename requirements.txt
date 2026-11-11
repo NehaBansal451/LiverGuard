@@ -1,8 +1,18 @@
-# Milestone 1 (data tooling): installed and tested
+# LiverGuard: single requirements file. Versions are the ones the test suite actually ran against (Python 3.13, CPU only).
+# For a CPU-only torch wheel:  pip install -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cpu
 numpy>=1.26
 pandas>=2.0
 pillow>=10.0
 scikit-learn>=1.3
+scipy>=1.11            # Grad-CAM randomisation check (Spearman)
 pyyaml>=6.0
 pydantic>=2.5
+torch>=2.15
+torchvision>=0.29
+matplotlib>=3.9
+streamlit>=1.40
+plotly>=5.24
+sqlalchemy>=2.0
+reportlab>=4.0
 pytest>=8.0
+# Planned, NOT used or tested anywhere in this repository: timm, albumentations, opencv-python-headless, captum, mlflow, dvc, fastapi

@@ -105,7 +105,13 @@ def run_experiment(cfg: TrainConfig, index_csv: str | Path, out_dir: str | Path,
     sid = split_manifest_id(frame)
     log.info("split_id=%s  images: %s", sid, {k: len(v) for k, v in parts.items()})
 
-    train_ds = UltrasoundDataset(parts["train"], cfg.image_size, augment=cfg.augment == "basic", cache=cfg.cache_images)
+    robust = None
+    if cfg.intervention != "baseline":
+        from liverguard.improve.augment import RobustAugment      # local import: M2 training must not depend on M6 code
+        robust = RobustAugment(cfg.intervention, cfg.intervention_p, cfg.robustness_config)
+        log.info("robust training: %s (%s), p=%.2f", cfg.intervention, robust.conditions, cfg.intervention_p)
+    train_ds = UltrasoundDataset(parts["train"], cfg.image_size, augment=cfg.augment == "basic", cache=cfg.cache_images,
+                                 robust=robust)
     val_ds = UltrasoundDataset(parts["val"], cfg.image_size, augment=False, cache=cfg.cache_images)
     train_loader = make_loader(train_ds, batch_size=cfg.batch_size, shuffle=True, num_workers=cfg.num_workers, seed=cfg.seed)
     val_loader = make_loader(val_ds, batch_size=cfg.batch_size, shuffle=False, num_workers=cfg.num_workers, seed=cfg.seed)
@@ -126,7 +132,8 @@ def run_experiment(cfg: TrainConfig, index_csv: str | Path, out_dir: str | Path,
     ckpt_meta = {"arch": cfg.arch, "num_classes": 2, "dropout": cfg.dropout, "image_size": cfg.image_size,
                  "class_names": CLASS_NAMES, "positive_class": "HCC", "weights_source": weights_src,
                  "split_id": sid, "seed": cfg.seed, "experiment_kind": cfg.experiment_kind,
-                 "label_control": cfg.label_control, "valid_as_result": cfg.valid_as_result}
+                 "label_control": cfg.label_control, "valid_as_result": cfg.valid_as_result,
+                 "intervention": cfg.intervention, "intervention_conditions": robust.conditions if robust else []}
 
     for epoch in range(1, cfg.epochs + 1):
         frozen = epoch <= cfg.freeze_epochs
@@ -162,7 +169,7 @@ def run_experiment(cfg: TrainConfig, index_csv: str | Path, out_dir: str | Path,
     results: dict = {}
     preds = []
     probs: dict[str, np.ndarray] = {}
-    for name in ("val", "test"):
+    for name in (("val", "test") if cfg.evaluate_test else ("val",)):
         ds = val_ds if name == "val" else UltrasoundDataset(parts[name], cfg.image_size, False, cfg.cache_images)
         loader = val_loader if name == "val" else make_loader(ds, batch_size=cfg.batch_size, shuffle=False,
                                                               num_workers=cfg.num_workers, seed=cfg.seed)
@@ -174,20 +181,22 @@ def run_experiment(cfg: TrainConfig, index_csv: str | Path, out_dir: str | Path,
     # Second operating point: threshold fitted on VALIDATION predictions only, applied unchanged to test.
     thr_val = youden_threshold(parts["val"]["label"].to_numpy(), probs["val"])
     results["val_youden_threshold"] = thr_val
-    results["test_at_val_youden"] = evaluate_frame(parts["test"], probs["test"], threshold=thr_val,
-                                                   n_boot=cfg.bootstrap_samples, seed=cfg.seed)
+    if cfg.evaluate_test:
+        results["test_at_val_youden"] = evaluate_frame(parts["test"], probs["test"], threshold=thr_val,
+                                                       n_boot=cfg.bootstrap_samples, seed=cfg.seed)
     pd.concat(preds).to_csv(out / "predictions.csv", index=False)
-    te = results["test"]
+    te = results.get("test")
 
     # ---- plots
     title = f"{cfg.arch} (seed {cfg.seed})"
     best_row = hist[hist["epoch"] == best_epoch].iloc[0]
     plots.plot_training_curves(hist, out / "training_curves.png", title, wm, best_epoch)
-    plots.plot_confusion_matrix(te["confusion_matrix"], CLASS_NAMES, out / "confusion_matrix_test.png",
-                                f"{title}: test", wm)
     ptab = pd.concat(preds)
     pt = ptab[ptab["split"] == "test"]
-    if pt["label"].nunique() == 2:
+    if te is not None:
+        plots.plot_confusion_matrix(te["confusion_matrix"], CLASS_NAMES, out / "confusion_matrix_test.png",
+                                    f"{title}: test", wm)
+    if te is not None and pt["label"].nunique() == 2:
         plots.plot_roc(pt["label"], pt["p_hcc"], out / "roc_test.png", f"{title}: test ROC", te["auroc"],
                        te["ci95_patient_bootstrap"]["auroc"], wm)
 
@@ -208,9 +217,10 @@ def run_experiment(cfg: TrainConfig, index_csv: str | Path, out_dir: str | Path,
         "artifacts": {p.name: str(p) for p in sorted(out.iterdir()) if p.is_file()},
         "environment": {"python": platform.python_version(), "torch": torch.__version__,
                         "liverguard": __version__},
-        "test_set_policy": "Test split evaluated once, after training, with the best-validation checkpoint. "
-                           "Primary operating point: threshold fixed in config. Secondary: Youden threshold "
-                           "fitted on validation only. Neither is tuned on test.",
+        "test_set_policy": ("Test split evaluated once, after training, with the best-validation checkpoint. "
+                            "Primary operating point: threshold fixed in config. Secondary: Youden threshold "
+                            "fitted on validation only. Neither is tuned on test.") if cfg.evaluate_test else
+                           "Test split NOT evaluated at training time (evaluate_test=false); it is used only by the final re-audit.",
     }
     (out / "manifest.json").write_text(json.dumps(manifest, indent=2, default=json_default), encoding="utf-8")
     return manifest

@@ -1,0 +1,11 @@
+# UNTESTED (no Docker daemon available in the authoring environment). Local research use only; do not expose publicly with the dataset mounted.
+services:
+  liverguard:
+    build: .
+    ports: ["127.0.0.1:8501:8501"]
+    environment:
+      LIVERGUARD_WORKSPACE: /workspace
+      LIVERGUARD_INDEX_CSV: /workspace/dataset/image_index.csv
+    volumes:
+      - ./artifacts:/workspace          # runs, jobs, reports, liverguard.db, image index
+      - ${SMC_LUD_DIR:-./data}:/data:ro # the licensed dataset, read-only, never part of the image

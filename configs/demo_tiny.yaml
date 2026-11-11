@@ -1,0 +1,18 @@
+# Demo on SYNTHETIC data only: long/high-lr enough for the tiny CNN to learn the planted signal (smoke_tiny.yaml is too short and gives random-sign AUROC).
+# Outputs are watermarked and are NOT results.
+run_name: demo_tiny
+experiment_kind: smoke
+arch: tiny_cnn
+pretrained: false
+image_size: 32
+variant: clean
+augment: basic
+batch_size: 16
+epochs: 12
+freeze_epochs: 1
+lr: 0.003
+patience: 12
+dropout: 0.1
+amp: false
+num_workers: 0
+bootstrap_samples: 200

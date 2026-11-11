@@ -12,3 +12,6 @@ mlruns/
 *.ckpt
 *.db
 .DS_Store
+
+demo_workspace/
+

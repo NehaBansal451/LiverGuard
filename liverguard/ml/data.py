@@ -104,12 +104,13 @@ def preprocess_pil(img: Image.Image, image_size: int) -> torch.Tensor:
 class UltrasoundDataset(Dataset):
     """Yields (tensor, label, row_index). Images are decoded once and cached resized when cache=True."""
 
-    def __init__(self, frame: pd.DataFrame, image_size: int, augment: bool = False, cache: bool = True):
+    def __init__(self, frame: pd.DataFrame, image_size: int, augment: bool = False, cache: bool = True, robust=None):
         self.frame = frame.reset_index(drop=True)
         self.paths = self.frame["path"].tolist()
         self.labels = self.frame["label"].to_numpy(dtype=int)
         self.size = image_size
         self.tf = build_transform(augment)
+        self.robust = robust           # optional callable (PIL image, key) -> PIL image; training-time robust augmentation (M6)
         self.cache = [load_resized(p, image_size) for p in self.paths] if cache else None
 
     def __len__(self) -> int:
@@ -117,6 +118,8 @@ class UltrasoundDataset(Dataset):
 
     def __getitem__(self, i: int):
         img = self.cache[i] if self.cache is not None else load_resized(self.paths[i], self.size)
+        if self.robust is not None:
+            img = self.robust(img, self.paths[i])
         return self.tf(img), int(self.labels[i]), i
 
 

@@ -12,7 +12,7 @@ class TrainConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     run_name: str = "baseline"
-    # 'smoke' = pipeline check on synthetic data; 'intervention' is reserved for M6 robust-training runs.
+    # 'smoke' = pipeline check on synthetic data; 'intervention' = M6 robust-training run.
     experiment_kind: Literal["baseline", "smoke", "intervention"] = "baseline"
     # Null control: permute labels across PATIENTS. A pipeline free of leakage must score ~0.5 AUROC.
     label_control: Literal["none", "patient_shuffle"] = "none"
@@ -25,6 +25,12 @@ class TrainConfig(BaseModel):
     image_size: int = Field(224, ge=16)
     variant: str | None = "clean"                 # official split is documented for Clean only
     augment: Literal["basic", "none"] = "basic"   # basic = h-flip + small rotation; no photometric/noise/blur
+    # M6 robust training: intervention name from liverguard.improve.interventions ('baseline' = none). Applied on top of `augment`.
+    intervention: str = "baseline"
+    intervention_p: float = Field(0.5, gt=0, le=1)       # probability each selected distortion is applied to a training image
+    robustness_config: Path | None = None                # audit YAML that supplies the severity ranges (default configs/robustness.yaml)
+    # False for M6 runs: the test split is then NOT evaluated at training time, so it cannot influence any decision.
+    evaluate_test: bool = True
     batch_size: int = Field(32, ge=2)
     num_workers: int = Field(2, ge=0)
     cache_images: bool = True

@@ -1,0 +1,35 @@
+# Robustness audit configuration (Milestone 3). Every parameter is editable; the audit manifest stores a copy.
+#
+# TIERS (a-priori judgement, NOT validated by radiologists):
+#   levels 1..plausible_max_level  -> "plausible": changes of a size that gain/probe/compression/pose variation
+#                                     could plausibly produce between acquisitions.
+#   higher levels                  -> "stress":    deliberately extreme; diagnostic information may be destroyed,
+#                                     so label preservation is NOT assumed and a failure there is not a clinical finding.
+# Label preservation is an assumption to be checked: see fidelity thresholds below, the distortion gallery plot
+# and expert review. Nothing here has been clinically validated.
+seed: 0                    # seeds the per-(image, condition) noise / rotation-sign generators
+plausible_max_level: 3
+n_boot: 500                # paired patient-level cluster bootstrap replicates (0 disables CIs)
+ci: 0.95
+flip_alert: 0.05           # a level "breaks" a condition when its flip rate >= this
+
+fidelity:                  # heuristic flags for "diagnostic information possibly destroyed"
+  min_psnr_db: 15.0
+  min_correlation: 0.5
+  min_std_ratio: 0.3       # distorted/original pixel std (contrast collapse)
+  max_new_saturated_fraction: 0.30
+
+# Parameters are applied at MODEL input resolution (after resize), in 0-255 intensity units unless stated.
+conditions:
+  - {name: brightness_dark,   family: brightness,      func: brightness,    params: [0.90, 0.80, 0.65, 0.50, 0.35]}  # multiplicative gain
+  - {name: brightness_bright, family: brightness,      func: brightness,    params: [1.10, 1.20, 1.35, 1.50, 1.80]}
+  - {name: contrast_low,      family: contrast,        func: contrast,      params: [0.90, 0.80, 0.65, 0.50, 0.30]}  # scale about image mean
+  - {name: contrast_high,     family: contrast,        func: contrast,      params: [1.10, 1.25, 1.50, 1.80, 2.20]}
+  - {name: gaussian_noise,    family: gaussian_noise,  func: gaussian_noise, params: [3, 6, 12, 20, 35]}              # additive sigma
+  - {name: speckle_noise,     family: speckle_noise,   func: speckle_noise, params: [0.05, 0.10, 0.20, 0.30, 0.45]}  # multiplicative sigma
+  - {name: gaussian_blur,     family: blur,            func: gaussian_blur, params: [0.004, 0.008, 0.016, 0.024, 0.040]}  # sigma as fraction of image side
+  - {name: rotation,          family: rotation,        func: rotation,      params: [2, 5, 10, 15, 30]}              # degrees, sign random per image
+  - {name: center_crop,       family: crop,            func: crop,          params: [0.95, 0.90, 0.80, 0.70, 0.50]}  # kept side fraction, resized back
+  - {name: gamma_low,         family: gamma,           func: gamma,         params: [0.90, 0.80, 0.65, 0.50, 0.35]}  # <1 brightens midtones
+  - {name: gamma_high,        family: gamma,           func: gamma,         params: [1.10, 1.25, 1.50, 2.00, 3.00]}  # >1 darkens midtones
+  - {name: jpeg,              family: jpeg,            func: jpeg,          params: [90, 70, 50, 30, 10]}            # JPEG quality (lower = worse)
