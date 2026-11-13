@@ -18,6 +18,8 @@ class IndexResult:
     unknown_values: dict[str, list[str]] = field(default_factory=dict)
     csv_unmatched: pd.DataFrame = field(default_factory=pd.DataFrame)
     csv_missing_columns: list[str] = field(default_factory=list)
+    data_root: Path | None = None
+    documented_discrepancies: list[str] = field(default_factory=list)
 
 
 def _read_metadata(cfg: DatasetConfig) -> tuple[Path | None, pd.DataFrame | None]:
@@ -134,4 +136,5 @@ def build_index(cfg: DatasetConfig) -> IndexResult:
         unmatched = meta.loc[[i for i in meta.index if i not in used_meta]].copy()
     return IndexResult(frame=frame, metadata_csv=metadata_path, conflicts=conflicts,
                        unknown_values={k: sorted(v) for k, v in unknown.items()},
-                       csv_unmatched=unmatched, csv_missing_columns=missing_cols)
+                       csv_unmatched=unmatched, csv_missing_columns=missing_cols, data_root=root,
+                       documented_discrepancies=list(cfg.documented_reference.known_discrepancies))
