@@ -66,8 +66,6 @@ def verify_patient_splits(frame: pd.DataFrame, cfg: Any) -> AuditReport:
     if leakage_count:
         _push(rep, "error", "patient_leakage_clean" if "clean" in set(valid["variant"]) else "patient_leakage",
               f"{leakage_count} patient/variant assignments span multiple splits", leakage_count, leakage_examples)
-    else:
-        _push(rep, "info", "no_patient_leakage", "No patient appears in multiple splits within the same variant.")
 
     # Clean and Caliper images from the same patient must share a patient-level partition.
     patient_variant = valid.groupby(["patient_key", "variant"])["split"].agg(lambda s: set(s.astype(str)))
@@ -82,6 +80,8 @@ def verify_patient_splits(frame: pd.DataFrame, cfg: Any) -> AuditReport:
         _push(rep, "warning", "cross_variant_split_overlap",
               "A patient has Clean and Caliper images assigned to different splits; analyse variants separately or use a patient-complete split.",
               len(cross), cross)
+    elif leakage_count == 0:
+        _push(rep, "info", "no_patient_leakage", "No patient appears in multiple splits within or across variants.")
 
     per_split: dict[str, dict[str, int]] = {}
     for split in ("train", "val", "test"):
@@ -132,11 +132,13 @@ def build_patient_splits(frame: pd.DataFrame, cfg: Any, seed: int | None = None)
     if missing:
         raise ValueError(f"Cannot rebuild patient splits: missing columns {sorted(missing)}")
 
-    patients = frame[["patient_key", "class_label"]].drop_duplicates()
-    nlabels = patients.groupby("patient_key")["class_label"].nunique()
+    label_col = "label" if "label" in frame.columns else "class_label"
+    patients = frame[["patient_key", label_col, "class_label"]].drop_duplicates()
+    nlabels = patients.groupby("patient_key")[label_col].nunique()
     ambiguous = nlabels[nlabels > 1]
     if len(ambiguous):
         raise ValueError(f"Cannot rebuild: {len(ambiguous)} patient(s) have several class labels, e.g. {ambiguous.index[:5].tolist()}")
+    patients = patients.drop(columns=[label_col]).drop_duplicates("patient_key")
     patients = patients.drop_duplicates("patient_key").reset_index(drop=True)
     if patients["patient_key"].isna().any():
         raise ValueError("Cannot rebuild splits: missing patient_key values")
