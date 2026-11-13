@@ -16,7 +16,7 @@ def _norm(value: Any) -> str | None:
     text = str(value).strip().lower()
     if not text or text in {"nan", "none", "null", "na", "n/a"}:
         return None
-    return re.sub(r"[-\\s]+", "_", text)
+    return re.sub(r"[-\s]+", "_", text)
 
 
 _DEFAULT_DISCREPANCIES = [
