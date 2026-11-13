@@ -83,7 +83,7 @@ def write_audit(result: DatasetAuditResult, out_dir: str | Path) -> dict[str, Pa
 
     report_obj: dict[str, Any] = {
         "ok": result.ok,
-        "data_root": str(result.index.data_root) if result.index.data_root else "",,
+        "data_root": str(result.index.data_root) if result.index.data_root else "",
         "split_id": result.split_id,
         "disclaimer": DISCLAIMER,
         "reports": [r.to_dict() for r in result.reports],
