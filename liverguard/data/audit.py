@@ -83,8 +83,7 @@ def write_audit(result: DatasetAuditResult, out_dir: str | Path) -> dict[str, Pa
 
     report_obj: dict[str, Any] = {
         "ok": result.ok,
-        "data_root": str(result.index.frame["path"].map(lambda p: str(Path(p).parent)).iloc[0].split(result.index.frame.iloc[0]["image_id"])[0])
-            if len(result.index.frame) else "",
+        "data_root": str(result.index.data_root) if result.index.data_root else "",,
         "split_id": result.split_id,
         "disclaimer": DISCLAIMER,
         "reports": [r.to_dict() for r in result.reports],
@@ -95,7 +94,7 @@ def write_audit(result: DatasetAuditResult, out_dir: str | Path) -> dict[str, Pa
         "unmatched_metadata_rows": int(len(result.index.csv_unmatched)),
     }
     # Recover the configured source notes where available without requiring them to be copied into every report.
-    report_obj["known_documentation_discrepancies"] = []
+    report_obj["known_documentation_discrepancies"] = result.index.documented_discrepancies
     paths["json"].write_text(json.dumps(report_obj, indent=2, default=json_default), encoding="utf-8")
 
     lines = ["# LiverGuard dataset audit", "", f"**Overall: {'PASS' if result.ok else 'FAIL'}**", "",
