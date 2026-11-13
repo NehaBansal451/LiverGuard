@@ -3,7 +3,8 @@ __pycache__
 *.pyc
 .pytest_cache
 artifacts
-data
+data/raw/
+data/processed/
 *.zip
 *.pt
 *.pth
