@@ -98,7 +98,7 @@ def verify_patient_splits(frame: pd.DataFrame, cfg: Any) -> AuditReport:
             per_split[split][cls] = int((part["class_label"] == cls).sum())
 
     stats = {
-        "has_official_split": bool(valid["split"].notna().all() and len(valid)),
+        "has_official_split": bool(frame["split"].notna().all() and len(frame)),
         "per_split": per_split,
         "split_id": split_manifest_id(frame),
         "patients_with_both_variants": int(frame.groupby("patient_key")["variant"].nunique().ge(2).sum())
