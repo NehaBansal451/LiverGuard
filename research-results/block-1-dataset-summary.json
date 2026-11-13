@@ -1,0 +1,88 @@
+{
+  "project": "LiverGuard",
+  "phase": "Block 1 — Dataset finalization",
+  "status": "READY WITH CAVEATS",
+  "source": "User-run Colab dataset audit; aggregate results only",
+  "dataset": {
+    "name": "SMC-LUD",
+    "indexed_images": 5385,
+    "unique_patients_in_manifest": 1013,
+    "images_by_class": {
+      "HCC": 2716,
+      "Hemangioma": 2669
+    },
+    "images_by_variant": {
+      "clean": 2656,
+      "caliper": 2729
+    },
+    "images_by_split": {
+      "train": 3759,
+      "val": 854,
+      "test": 772
+    },
+    "patients_by_split": {
+      "train": 709,
+      "val": 152,
+      "test": 152
+    },
+    "clean_images_by_split_and_class": {
+      "train": {
+        "HCC": 1003,
+        "Hemangioma": 913
+      },
+      "val": {
+        "HCC": 185,
+        "Hemangioma": 201
+      },
+      "test": {
+        "HCC": 201,
+        "Hemangioma": 153
+      }
+    }
+  },
+  "integrity_checks": {
+    "image_readability_check_completed": true,
+    "image_hashes_computed": 5385,
+    "hash_errors": 0,
+    "near_duplicate_cross_split_pairs_at_dhash_hamming_le_2": 0,
+    "patient_split_leakage_detected": 0,
+    "exact_duplicate_count": null,
+    "exact_duplicate_count_note": "Not present in the console summary captured for this publication."
+  },
+  "patient_reconciliation": {
+    "HCC": {
+      "patient_table_ids": 600,
+      "manifest_patient_ids": 600,
+      "patient_folder_ids": 600,
+      "table_ids_without_folders": 0,
+      "folder_ids_not_in_table": 0,
+      "table_ids_without_manifest": 0,
+      "manifest_ids_without_table": 0
+    },
+    "Hemangioma": {
+      "patient_table_ids": 421,
+      "manifest_patient_ids": 413,
+      "patient_folder_ids": 413,
+      "intersection_table_and_folders": 412,
+      "table_ids_without_folders": 9,
+      "folder_ids_not_in_table": 1,
+      "table_ids_without_manifest": 9,
+      "manifest_ids_without_table": 1
+    }
+  },
+  "caveats": [
+    "The manifest contains 1,013 unique patients, while the reference configuration expects 1,021.",
+    "Nine Hemangioma patient-table IDs have no image folders; one image-folder ID is absent from the patient table.",
+    "The observed Clean split image counts differ from the configured published-reference split counts. The existing patient split was preserved and must not be described as an exact reproduction of the published split.",
+    "The duplicate analysis reported zero cross-split near-duplicate pairs at dHash Hamming distance <= 2. This does not prove absence of all visually similar images.",
+    "Exact duplicate count was not included in the captured console summary; see the private full report in the owner's Drive."
+  ],
+  "research_policy": {
+    "test_split_used_for_training_or_selection": false,
+    "split_rebuilt_or_modified": false,
+    "patient_ids_or_image_paths_published": false,
+    "ultrasound_images_published": false,
+    "note": "Only aggregate counts and integrity findings are published. Full image-level files, hashes, predictions, checkpoints and detailed reports remain in private Google Drive."
+  },
+  "split_manifest_id": "8a0b738ccb9168c918214c365e1bbb84d79d72274d2ec4ccf97d68b373a5a9f2"
+}
