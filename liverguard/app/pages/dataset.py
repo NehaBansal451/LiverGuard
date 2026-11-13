@@ -18,10 +18,10 @@ def render() -> None:
         _verify_panel(w)
         state.finish()
         return
-   idx = idx.copy()
-idx["split"] = idx["split"].fillna("unknown").astype(str)
-idx["variant"] = idx["variant"].fillna("unknown").astype(str)
-o = ops.dataset_overview(idx)
+    idx = idx.copy()
+    idx["split"] = idx["split"].fillna("unknown").astype(str)
+    idx["variant"] = idx["variant"].fillna("unknown").astype(str)
+    o = ops.dataset_overview(idx)
     t_over, t_browse, t_domain, t_quality, t_verify = st.tabs(["Overview", "Browse images", "Clean vs Caliper", "Data quality", "Verify / re-index"])
 
     with t_over:
