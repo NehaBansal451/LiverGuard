@@ -145,7 +145,7 @@ def validate_index(index, cfg, image_stats: pd.DataFrame | None = None) -> Audit
                                          "Some image files cannot be decoded.", len(bad), bad["image_id"].head(10).tolist()))
         if "width" in image_stats and "height" in image_stats:
             readable = image_stats.dropna(subset=["width", "height"])
-            rep.stats["image_dimensions"] = readable.groupby(["width", "height"]).size().to_dict()
+            rep.stats["image_dimensions"] = {f"{int(w)}x{int(h)}": int(n) for (w, h), n in readable.groupby(["width", "height"]).size().items()}
             rep.stats["mean_image_width"] = float(readable["width"].mean()) if len(readable) else None
             rep.stats["mean_image_height"] = float(readable["height"].mean()) if len(readable) else None
 
