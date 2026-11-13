@@ -47,6 +47,8 @@ def verify_patient_splits(frame: pd.DataFrame, cfg: Any) -> AuditReport:
         return rep
 
     valid = frame[frame["split"].notna()].copy()
+    if valid.empty:
+        _push(rep, "info", "no_split_information", "No official split assignments were found; patient-level splits must be supplied or rebuilt separately.")
     known_splits = {"train", "val", "test"}
     bad_names = sorted(set(valid["split"].astype(str)) - known_splits)
     if bad_names:
@@ -60,7 +62,7 @@ def verify_patient_splits(frame: pd.DataFrame, cfg: Any) -> AuditReport:
             if len(splits) > 1:
                 leakage_count += 1
                 if len(leakage_examples) < 10:
-                    leakage_examples.append(f"{patient} [{'+'.join(splits)}; variant={variant}]")
+                    leakage_examples.append(f"{patient} [{'+'.join(splits)}]")
     if leakage_count:
         _push(rep, "error", "patient_leakage_clean" if "clean" in set(valid["variant"]) else "patient_leakage",
               f"{leakage_count} patient/variant assignments span multiple splits", leakage_count, leakage_examples)
